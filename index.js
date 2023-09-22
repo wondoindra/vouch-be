@@ -13,7 +13,6 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use('/', (req, res) => {
-  console.log('hello')
   res.send('<h1>Hello world</h1>')
 })
 
@@ -23,7 +22,19 @@ const io = new Server(server, {
 })
 
 io.on('connection', (socket) => {
-  console.log('a user connected')
+  socket.on('disconnect', () => {
+    console.log('user disconnected')
+  })
+
+  socket.on('login-user', (data) => {
+    const { roomId, username } = data
+    socket.join(roomId)
+    socket.to(roomId).emit('add-user', { username, message: `${username} has joined ${roomId}` })
+  })
+
+  socket.on('send-message', (data) => {
+    socket.broadcast.emit('new-message', data)
+  })
 })
 
 server.listen(PORT, () => {
